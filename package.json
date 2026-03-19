@@ -1,0 +1,15 @@
+{
+  "name": "virtual-brain",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local-first real-time cognitive layer for live conversations",
+  "scripts": {
+    "start:python": "cd services/python && python -m uvicorn main:app --host 0.0.0.0 --port 8100 --reload",
+    "start:node": "cd services/node && npx tsx src/index.ts",
+    "start:client": "cd client && npx vite --port 3000",
+    "dev": "concurrently --names python,node,client --prefix-colors yellow,cyan,green \"npm run start:python\" \"npm run start:node\" \"npm run start:client\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}

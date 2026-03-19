@@ -1,0 +1,104 @@
+.app {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.app-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.app-header h1 {
+  font-size: 2rem;
+  margin-bottom: 0.25rem;
+}
+
+.app-header p {
+  color: #888;
+  font-size: 0.95rem;
+}
+
+.app-main {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.transcript-panel {
+  flex: 1;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 1rem;
+  min-height: 300px;
+}
+
+.transcript-panel h2 {
+  font-size: 1.1rem;
+  margin-bottom: 0.75rem;
+}
+
+.placeholder {
+  color: #666;
+  font-style: italic;
+}
+
+/* Audio Upload */
+.audio-upload {
+  margin-bottom: 1rem;
+}
+
+.upload-btn {
+  display: inline-block;
+  padding: 0.5rem 1.2rem;
+  background: #2563eb;
+  color: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.15s;
+}
+
+.upload-btn:hover {
+  background: #1d4ed8;
+}
+
+.upload-btn:has(input:disabled) {
+  background: #555;
+  cursor: wait;
+}
+
+/* Error */
+.error-msg {
+  color: #ef4444;
+  font-size: 0.9rem;
+  margin: 0.5rem 0;
+}
+
+/* Transcript segments */
+.transcript-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.segment-item {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid #2a2a2a;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.segment-time {
+  color: #888;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  min-width: 5rem;
+  padding-top: 0.1rem;
+}
+
+.segment-text {
+  color: #e0e0e0;
+}
