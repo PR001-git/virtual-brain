@@ -1,12 +1,18 @@
-import type { PythonService } from "../interfaces/python-service.js";
+import WebSocket from "ws";
+import type { PythonStreamService } from "../interfaces/python-service.js";
 import type { StatusMessage, TranscriptResponse } from "../types.js";
 
 /**
- * Adapter: HTTP client to the Python FastAPI service.
+ * Adapter: HTTP + WebSocket client to the Python FastAPI service.
  * Encapsulates all Python service communication details.
  */
-export class PythonBridge implements PythonService {
-  constructor(private baseUrl: string) {}
+export class PythonBridge implements PythonStreamService {
+  private wsBaseUrl: string;
+
+  constructor(private baseUrl: string) {
+    // Derive WS URL from HTTP URL (http://... → ws://...)
+    this.wsBaseUrl = baseUrl.replace(/^http/, "ws");
+  }
 
   async healthCheck(): Promise<StatusMessage> {
     const res = await fetch(`${this.baseUrl}/health`);
@@ -36,4 +42,20 @@ export class PythonBridge implements PythonService {
 
     return res.json() as Promise<TranscriptResponse>;
   }
+
+  /**
+   * Opens a WebSocket connection to Python's streaming transcription endpoint.
+   * Returns the raw WS so the caller can pipe messages through it.
+   */
+  connectTranscribeWs(): Promise<WebSocket> {
+    return new Promise((resolve, reject) => {
+      const ws = new WebSocket(`${this.wsBaseUrl}/ws/transcribe`);
+
+      ws.on("open", () => resolve(ws));
+      ws.on("error", (err) => reject(err));
+    });
+  }
 }
+
+// Re-export the type for client-handler
+export type PythonStreamBridge = PythonBridge;
