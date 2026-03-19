@@ -1,4 +1,4 @@
-# VirtualBrain — Full MVP Roadmap
+# VirtualBrain
 
 ## Context
 
