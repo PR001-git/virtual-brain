@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <style>
+    body {
+      width: 260px;
+      padding: 16px;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #1a1a1a;
+      color: #e0e0e0;
+      margin: 0;
+    }
+    h2 {
+      font-size: 14px;
+      margin: 0 0 12px;
+    }
+    .status {
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 12px;
+    }
+    .status.active {
+      color: #4ade80;
+    }
+    button {
+      width: 100%;
+      padding: 8px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: background 0.15s;
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: wait;
+    }
+    .btn-start {
+      background: #16a34a;
+      color: #fff;
+    }
+    .btn-start:hover:not(:disabled) { background: #15803d; }
+    .btn-stop {
+      background: #dc2626;
+      color: #fff;
+    }
+    .btn-stop:hover:not(:disabled) { background: #b91c1c; }
+    .error {
+      color: #ef4444;
+      font-size: 12px;
+      margin-top: 8px;
+      word-break: break-word;
+    }
+    .transcript {
+      margin-top: 10px;
+      padding: 8px;
+      background: #222;
+      border-radius: 4px;
+      font-size: 12px;
+      color: #e0e0e0;
+      max-height: 200px;
+      overflow-y: auto;
+      line-height: 1.4;
+    }
+    .transcript:empty {
+      display: none;
+    }
+    .transcript p {
+      margin: 0 0 6px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #333;
+    }
+    .transcript p:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+    .log {
+      margin-top: 10px;
+      padding: 6px;
+      background: #111;
+      border-radius: 4px;
+      font-size: 10px;
+      color: #888;
+      max-height: 80px;
+      overflow-y: auto;
+      font-family: monospace;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+  </style>
+</head>
+<body>
+  <h2>VirtualBrain</h2>
+  <p class="status" id="status">Not capturing</p>
+  <button id="toggleBtn" class="btn-start">Capture This Tab</button>
+  <p class="error" id="error"></p>
+  <div class="transcript" id="transcript"></div>
+  <div class="log" id="log"></div>
+  <script src="popup.js"></script>
+</body>
+</html>

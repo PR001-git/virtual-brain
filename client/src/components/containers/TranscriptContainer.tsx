@@ -2,11 +2,16 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { TranscriptSegment } from "../../types";
 import { useWebSocket, type WSStatus } from "../../hooks/useWebSocket";
 import { useAudioSource } from "../../hooks/useAudioSource";
-import { FileAudioSource } from "../../strategies/audio-sources";
+import {
+  FileAudioSource,
+  MicAudioSource,
+  type AudioSourceStrategy,
+} from "../../strategies/audio-sources";
 import AudioUpload from "../presenters/AudioUpload";
+import MicCapture from "../presenters/MicCapture";
 import TranscriptView from "../presenters/TranscriptView";
 
-type Mode = "upload" | "stream";
+type Mode = "upload" | "stream" | "mic";
 
 export default function TranscriptContainer() {
   const [mode, setMode] = useState<Mode>("stream");
@@ -24,8 +29,8 @@ export default function TranscriptContainer() {
   const statusRef = useRef<WSStatus>(status);
   statusRef.current = status;
 
-  // Pending file source waiting for WS connection
-  const pendingSourceRef = useRef<FileAudioSource | null>(null);
+  // Pending audio source waiting for WS connection
+  const pendingSourceRef = useRef<AudioSourceStrategy | null>(null);
 
   // When WS connects and we have a pending source, start streaming
   useEffect(() => {
@@ -125,12 +130,61 @@ export default function TranscriptContainer() {
     }
   };
 
+  // --- Mic mode handlers ---
+  const micSourceRef = useRef<MicAudioSource | null>(null);
+
+  const handleMicStart = () => {
+    setSegments([]);
+    setError(null);
+    setLoading(true);
+    setChunksSent(0);
+    setChunksTranscribed(0);
+    clearMessages();
+
+    const source = new MicAudioSource();
+    micSourceRef.current = source;
+
+    // Wrap start to track chunks sent
+    const originalStart = source.start.bind(source);
+    source.start = (onChunk, onDone) => {
+      originalStart(
+        (b64, seq) => {
+          setChunksSent((n) => n + 1);
+          onChunk(b64, seq);
+        },
+        onDone,
+      );
+    };
+
+    if (statusRef.current === "connected") {
+      startStreaming(source);
+    } else {
+      pendingSourceRef.current = source;
+      connect();
+    }
+  };
+
+  const handleMicStop = () => {
+    micSourceRef.current?.stop();
+    micSourceRef.current = null;
+    stopStreaming();
+    setLoading(false);
+
+    // Signal stream complete to server
+    send({
+      type: "status",
+      message: "stream_complete",
+      ready: true,
+    });
+  };
+
   const handleUpload = mode === "stream" ? handleStreamUpload : handleDirectUpload;
 
   const statusLabel = useMemo(() => {
     if (!loading) return null;
-    if (mode === "stream") {
-      return `Streaming: ${chunksTranscribed}/${chunksSent} chunks transcribed (WS: ${status})`;
+    if (mode === "stream" || mode === "mic") {
+      const label = mode === "mic" ? "Recording" : "Streaming";
+      return `${label}: ${chunksTranscribed}/${chunksSent} chunks transcribed (WS: ${status})`;
     }
     return "Transcribing...";
   }, [loading, mode, chunksSent, chunksTranscribed, status]);
@@ -154,10 +208,26 @@ export default function TranscriptContainer() {
           >
             Stream
           </button>
+          <button
+            className={`mode-btn ${mode === "mic" ? "active" : ""}`}
+            onClick={() => setMode("mic")}
+            disabled={loading}
+          >
+            Mic
+          </button>
         </div>
       </div>
 
-      <AudioUpload onUpload={handleUpload} disabled={loading} />
+      {mode === "mic" ? (
+        <MicCapture
+          recording={streaming}
+          onStart={handleMicStart}
+          onStop={handleMicStop}
+          disabled={loading && !streaming}
+        />
+      ) : (
+        <AudioUpload onUpload={handleUpload} disabled={loading} />
+      )}
 
       {statusLabel && <p className="status-msg">{statusLabel}</p>}
       {error && <p className="error-msg">{error}</p>}

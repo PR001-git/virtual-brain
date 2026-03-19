@@ -122,13 +122,23 @@ async def ws_transcribe(ws: WebSocket):
     try:
         while True:
             raw = await ws.receive_text()
-            msg = json.loads(raw)
+            try:
+                msg = json.loads(raw)
+            except json.JSONDecodeError:
+                print(f"[WS] Malformed JSON, skipping")
+                continue
 
             if msg.get("type") == "audio_chunk":
-                await pipeline.process_chunk(
-                    b64_audio=msg["data"],
-                    sequence=msg.get("sequence", 0),
-                )
+                try:
+                    await pipeline.process_chunk(
+                        b64_audio=msg["data"],
+                        sequence=msg.get("sequence", 0),
+                    )
+                except Exception as e:
+                    print(f"[WS] Error processing chunk {msg.get('sequence', '?')}: {e}")
+                    await ws.send_json(
+                        ErrorMessage(message=f"Chunk processing error: {e}").model_dump()
+                    )
             elif msg.get("type") == "status" and msg.get("message") == "stream_complete":
                 # Client signals all chunks sent
                 await ws.send_json(
@@ -136,5 +146,7 @@ async def ws_transcribe(ws: WebSocket):
                 )
     except WebSocketDisconnect:
         pass
+    except Exception as e:
+        print(f"[WS] Unexpected error: {e}")
     finally:
         bus.off("transcript.segment_ready", on_segment_ready)

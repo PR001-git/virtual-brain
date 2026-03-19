@@ -55,8 +55,8 @@ class TranscriptionPipeline:
             "sequence": sequence,
         })
 
-        # Transcribe the chunk
-        text = self._transcriber.transcribe_chunk(pcm_bytes)
+        # Transcribe the chunk (run in thread pool to avoid blocking event loop)
+        text = await asyncio.to_thread(self._transcriber.transcribe_chunk, pcm_bytes)
 
         self._sequence += 1
         await self._bus.emit("transcript.segment_ready", {

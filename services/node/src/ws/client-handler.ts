@@ -65,7 +65,8 @@ export class ClientHandler extends EventEmitter {
       }
     });
 
-    this.pythonWs.on("close", () => {
+    this.pythonWs.on("close", (code, reason) => {
+      console.error(`[ClientHandler] Python WS closed: code=${code} reason=${reason}`);
       this.pythonWs = null;
     });
 

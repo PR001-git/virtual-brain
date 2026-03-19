@@ -154,6 +154,60 @@
   margin: 0.5rem 0;
 }
 
+/* Mic capture */
+.mic-capture {
+  margin-bottom: 1rem;
+}
+
+.mic-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.2rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.15s;
+}
+
+.mic-btn--start {
+  background: #16a34a;
+  color: #fff;
+}
+
+.mic-btn--start:hover:not(:disabled) {
+  background: #15803d;
+}
+
+.mic-btn--start:disabled {
+  background: #555;
+  cursor: not-allowed;
+}
+
+.mic-btn--stop {
+  background: #dc2626;
+  color: #fff;
+}
+
+.mic-btn--stop:hover {
+  background: #b91c1c;
+}
+
+.mic-indicator {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #fff;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
 /* Streaming segment animation */
 .segment-item:last-child {
   animation: fadeIn 0.3s ease-in;
