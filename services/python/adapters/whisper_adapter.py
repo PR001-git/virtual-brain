@@ -61,7 +61,12 @@ class WhisperAdapter(TranscriptionStrategy):
                 wf.setframerate(16000)
                 wf.writeframes(pcm_bytes)
 
-            segments, _ = self._model.transcribe(str(tmp), beam_size=1)
+            segments, _ = self._model.transcribe(
+                str(tmp),
+                beam_size=1,
+                language="en",
+                vad_filter=True,
+            )
             return " ".join(seg.text.strip() for seg in segments if seg.text.strip())
         finally:
             tmp.unlink(missing_ok=True)

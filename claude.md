@@ -1,6 +1,10 @@
 # Project: VirtualBrain
 Keep the plan practical and focused — this is a learning project, not production software. Prefer simplicity.
 
+## Critical Rules
+
+- **Always update CLAUDE.md** — whenever project structure, architecture, phases, rules, or conventions change, update the relevant sections in this file immediately. CLAUDE.md must stay in sync with the actual state of the project.
+
 ## Overview
 VirtualBrain is a local-first, open-source system that acts as a real-time cognitive layer on top of live conversations.
 

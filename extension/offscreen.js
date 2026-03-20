@@ -8,7 +8,7 @@
 
 const WS_URL = "ws://localhost:8200/ws";
 const SAMPLE_RATE = 16000;
-const CHUNK_DURATION_S = 3;
+const CHUNK_DURATION_S = 1;
 
 let ws = null;
 let mediaStream = null;
@@ -44,6 +44,12 @@ async function startCapture(streamId) {
       // ignore malformed
     }
   };
+
+  // Play the captured audio back so the user can still hear it.
+  // tabCapture mutes the tab's original output — this restores it.
+  const playback = new Audio();
+  playback.srcObject = mediaStream;
+  playback.play().catch(() => {});
 
   // Set up audio processing at 16kHz mono
   audioCtx = new AudioContext({ sampleRate: SAMPLE_RATE });

@@ -9,7 +9,7 @@ class Config:
     PORT: int = int(os.getenv("VB_PYTHON_PORT", "8100"))
 
     # Whisper
-    WHISPER_MODEL: str = os.getenv("VB_WHISPER_MODEL", "base")
+    WHISPER_MODEL: str = os.getenv("VB_WHISPER_MODEL", "tiny")
     WHISPER_DEVICE: str = os.getenv("VB_WHISPER_DEVICE", "cpu")
     WHISPER_COMPUTE_TYPE: str = os.getenv("VB_WHISPER_COMPUTE_TYPE", "int8")
 

@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find S:/PERSONAL_PROJECTS/AI/Node/virtual-brain/services -type f -name *.py -o -name *.ts -o -name *.tsx)"
+    ]
+  }
+}

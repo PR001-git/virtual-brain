@@ -22,8 +22,8 @@ async function ensureOffscreenDocument() {
 
   await chrome.offscreen.createDocument({
     url: "offscreen.html",
-    reasons: ["USER_MEDIA"],
-    justification: "Audio processing for tab capture and VirtualBrain transcription",
+    reasons: ["USER_MEDIA", "AUDIO_PLAYBACK"],
+    justification: "Audio capture and playback for VirtualBrain transcription",
   });
   offscreenReady = true;
 }
