@@ -12,7 +12,7 @@ interface SegmentItemProps {
 
 export default function SegmentItem({ segment }: SegmentItemProps) {
   return (
-    <div className="segment-item">
+    <div className={`segment-item${segment.is_partial ? " segment-partial" : ""}`}>
       <span className="segment-time">
         {formatTime(segment.start)} — {formatTime(segment.end)}
       </span>

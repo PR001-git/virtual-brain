@@ -71,5 +71,46 @@ class WhisperAdapter(TranscriptionStrategy):
         finally:
             tmp.unlink(missing_ok=True)
 
+    def transcribe_chunk_streaming(self, pcm_bytes: bytes):
+        """Yield (accumulated_text, is_partial) as Whisper decodes each segment.
+
+        faster-whisper returns a lazy generator, so segments are yielded
+        progressively as they are decoded — not all at once. Each intermediate
+        yield carries is_partial=True; the final yield carries is_partial=False
+        with the complete accumulated text.
+        """
+        if self._model is None:
+            raise RuntimeError("Model not loaded — call load_model() first")
+
+        import tempfile
+        import wave
+
+        tmp = Path(tempfile.mktemp(suffix=".wav"))
+        try:
+            with wave.open(str(tmp), "wb") as wf:
+                wf.setnchannels(1)
+                wf.setsampwidth(2)  # 16-bit
+                wf.setframerate(16000)
+                wf.writeframes(pcm_bytes)
+
+            segments, _ = self._model.transcribe(
+                str(tmp),
+                beam_size=1,
+                language="en",
+                vad_filter=True,
+            )
+
+            accumulated: list[str] = []
+            for seg in segments:
+                text = seg.text.strip()
+                if text:
+                    accumulated.append(text)
+                    yield " ".join(accumulated), True
+
+            # Final emit — complete text, marked as non-partial
+            yield " ".join(accumulated), False
+        finally:
+            tmp.unlink(missing_ok=True)
+
     def is_ready(self) -> bool:
         return self._model is not None

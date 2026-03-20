@@ -211,10 +211,12 @@ No blocking steps.
 - Requires: Ollama running locally (`ollama serve`) with the configured model (default: `mistral`)
 - Env vars: `VB_OLLAMA_URL`, `VB_OLLAMA_MODEL`, `VB_MEMORY_MAX_SEGMENTS`, `VB_MEMORY_PRUNE_COUNT`
 
-### Phase 5 — Reactive Brain
-- Improve latency
-- Add partial transcripts
-- Enhance UI responsiveness
+### Phase 5 — Reactive Brain ✓ COMPLETE
+- `WhisperAdapter.transcribe_chunk_streaming()` (`adapters/whisper_adapter.py`): lazy generator that yields `(accumulated_text, is_partial)` tuples as faster-whisper decodes each segment within a chunk — partials arrive immediately, final emitted when generator exhausts
+- `TranscriptionPipeline.process_chunk()` (`pipeline.py`): runs streaming transcription in a daemon thread; results forwarded to the async event loop via `asyncio.Queue` and `loop.call_soon_threadsafe` — enables partial `transcript.segment_ready` events without blocking the WS handler
+- `main.py`: `on_segment_ready` guards memory writes to final segments only (`is_partial=False`) to prevent duplicate context entries
+- `TranscriptContainer.tsx` (React): partial segments tracked by `sequence`; in-place updates on re-arrival; replaced atomically when the final for that sequence arrives
+- `SegmentItem.tsx` / `App.css`: partial segments rendered with `.segment-partial` class — italic, dimmed text; replaced by normal styling on finalization
 
 ---
 

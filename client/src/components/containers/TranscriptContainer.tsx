@@ -46,16 +46,47 @@ export default function TranscriptContainer() {
 
     const latest = messages[messages.length - 1];
 
-    if (latest.type === "transcript" && latest.text.trim()) {
-      setChunksTranscribed((n) => n + 1);
-      setSegments((prev) => [
-        ...prev,
-        {
-          start: latest.sequence * 3,
-          end: (latest.sequence + 1) * 3,
-          text: latest.text,
-        },
-      ]);
+    if (latest.type === "transcript") {
+      if (latest.is_partial && latest.text.trim()) {
+        // Update existing partial for this sequence, or append a new one
+        setSegments((prev) => {
+          const idx = prev.findIndex(
+            (s) => s.is_partial && s.sequence === latest.sequence,
+          );
+          const seg = {
+            start: latest.sequence * 3,
+            end: (latest.sequence + 1) * 3,
+            text: latest.text,
+            is_partial: true,
+            sequence: latest.sequence,
+          };
+          if (idx >= 0) {
+            const updated = [...prev];
+            updated[idx] = seg;
+            return updated;
+          }
+          return [...prev, seg];
+        });
+      } else if (!latest.is_partial) {
+        // Finalize: remove the partial for this sequence, append the final
+        setChunksTranscribed((n) => n + 1);
+        setSegments((prev) => {
+          const withoutPartial = prev.filter(
+            (s) => !(s.is_partial && s.sequence === latest.sequence),
+          );
+          if (!latest.text.trim()) return withoutPartial;
+          return [
+            ...withoutPartial,
+            {
+              start: latest.sequence * 3,
+              end: (latest.sequence + 1) * 3,
+              text: latest.text,
+              is_partial: false,
+              sequence: latest.sequence,
+            },
+          ];
+        });
+      }
     }
 
     if (latest.type === "llm_response") {
@@ -274,7 +305,7 @@ export default function TranscriptContainer() {
       <BrainPanel
         onPrompt={handlePrompt}
         messages={llmMessages}
-        disabled={status !== "connected"}
+        disabled={false}
       />
     </>
   );

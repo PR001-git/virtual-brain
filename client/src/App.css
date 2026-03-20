@@ -322,6 +322,16 @@
   cursor: not-allowed;
 }
 
+/* Partial (in-progress) transcript segment */
+.segment-partial {
+  opacity: 0.55;
+}
+
+.segment-partial .segment-text {
+  color: #999;
+  font-style: italic;
+}
+
 /* Streaming segment animation */
 .segment-item:last-child {
   animation: fadeIn 0.3s ease-in;

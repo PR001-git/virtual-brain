@@ -114,8 +114,9 @@ async def ws_transcribe(ws: WebSocket):
 
     async def on_segment_ready(data: dict):
         text = data["text"]
-        # Store every non-empty segment in memory
-        if text.strip() and memory is not None:
+        is_partial = data.get("is_partial", False)
+        # Only store finalized segments — partials would create duplicates
+        if not is_partial and text.strip() and memory is not None:
             memory.add_segment(text, time.time())
 
         msg = TranscriptMessage(

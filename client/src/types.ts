@@ -42,6 +42,8 @@ export interface TranscriptSegment {
   start: number;
   end: number;
   text: string;
+  sequence?: number;
+  is_partial?: boolean;
 }
 
 export type WSMessage =
