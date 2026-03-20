@@ -6,6 +6,33 @@ Keep the plan practical and focused — this is a learning project, not producti
 - **Always update CLAUDE.md** — whenever project structure, architecture, phases, rules, or conventions change, update the relevant sections in this file immediately. CLAUDE.md must stay in sync with the actual state of the project.
 - **Always update CLAUDE.md structures and rules** — whenever a new pattern, constraint, architectural decision, or development rule is established during work, add it to the appropriate section in CLAUDE.md before ending the task. Never let agreed-upon rules or structural changes exist only in conversation history.
 
+## Quick Start (Windows)
+
+### Prerequisites
+- Python 3.10+
+- Node.js 18+
+- ffmpeg (for audio processing)
+- Ollama (optional, for AI chat features)
+
+### First-time setup
+```
+setup.bat
+```
+Checks prerequisites, creates Python venv at `services/python/.venv`, installs all pip and npm dependencies, and pulls the Ollama model.
+
+### Run
+```
+start.bat
+```
+Starts Ollama (if installed), activates the venv via PATH, and launches all three services (`npm run dev`).
+
+### Convention
+- Python venv lives at `services/python/.venv` — never install deps globally
+- `start.bat` prepends the venv `Scripts` dir to PATH so `python` in npm scripts resolves to the venv interpreter automatically
+- Environment variables are documented in `.env.example`
+
+---
+
 ## Overview
 VirtualBrain is a local-first, open-source system that acts as a real-time cognitive layer on top of live conversations.
 
