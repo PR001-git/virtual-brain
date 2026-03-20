@@ -1,5 +1,7 @@
 from config import Config
 from interfaces.transcription import TranscriptionStrategy
+from interfaces.memory import MemoryRepository
+from interfaces.llm import LLMAdapter
 
 
 def create_transcriber(cfg: Config) -> TranscriptionStrategy:
@@ -15,18 +17,21 @@ def create_transcriber(cfg: Config) -> TranscriptionStrategy:
     return adapter
 
 
-# Phase 4 stubs — uncomment when implementing
+def create_memory_repo(cfg: Config) -> MemoryRepository:
+    """Factory: create the in-memory transcript store."""
+    from repositories.memory_repository import InMemoryRepository
 
-# def create_memory_repo(cfg: Config) -> MemoryRepository:
-#     from repositories.memory_repository import InMemoryRepository
-#     return InMemoryRepository(
-#         max_segments=cfg.MEMORY_MAX_SEGMENTS,
-#         prune_count=cfg.MEMORY_PRUNE_COUNT,
-#     )
+    return InMemoryRepository(
+        max_segments=cfg.MEMORY_MAX_SEGMENTS,
+        prune_count=cfg.MEMORY_PRUNE_COUNT,
+    )
 
-# def create_llm_client(cfg: Config) -> LLMAdapter:
-#     from adapters.ollama_adapter import OllamaAdapter
-#     return OllamaAdapter(
-#         base_url=cfg.OLLAMA_BASE_URL,
-#         model=cfg.OLLAMA_MODEL,
-#     )
+
+def create_llm_client(cfg: Config) -> LLMAdapter:
+    """Factory: create the Ollama LLM adapter."""
+    from adapters.ollama_adapter import OllamaAdapter
+
+    return OllamaAdapter(
+        base_url=cfg.OLLAMA_BASE_URL,
+        model=cfg.OLLAMA_MODEL,
+    )

@@ -10,6 +10,7 @@ import {
 import AudioUpload from "../presenters/AudioUpload";
 import MicCapture from "../presenters/MicCapture";
 import TranscriptView from "../presenters/TranscriptView";
+import BrainPanel, { type LLMMessage } from "../presenters/BrainPanel";
 
 type Mode = "upload" | "stream" | "mic";
 
@@ -20,19 +21,17 @@ export default function TranscriptContainer() {
   const [error, setError] = useState<string | null>(null);
   const [chunksSent, setChunksSent] = useState(0);
   const [chunksTranscribed, setChunksTranscribed] = useState(0);
+  const [llmMessages, setLlmMessages] = useState<LLMMessage[]>([]);
 
   const { status, messages, send, connect, disconnect, clearMessages } =
     useWebSocket();
   const { streaming, startStreaming, stopStreaming } = useAudioSource(send);
 
-  // Keep a ref to status so interval callbacks see the latest value
   const statusRef = useRef<WSStatus>(status);
   statusRef.current = status;
 
-  // Pending audio source waiting for WS connection
   const pendingSourceRef = useRef<AudioSourceStrategy | null>(null);
 
-  // When WS connects and we have a pending source, start streaming
   useEffect(() => {
     if (status === "connected" && pendingSourceRef.current) {
       const source = pendingSourceRef.current;
@@ -41,7 +40,7 @@ export default function TranscriptContainer() {
     }
   }, [status, startStreaming]);
 
-  // Process incoming WebSocket messages → append segments
+  // Process incoming WebSocket messages
   useEffect(() => {
     if (messages.length === 0) return;
 
@@ -59,8 +58,37 @@ export default function TranscriptContainer() {
       ]);
     }
 
+    if (latest.type === "llm_response") {
+      if (latest.is_complete) {
+        // Mark the last pending message as complete
+        setLlmMessages((prev) =>
+          prev.map((m, i) =>
+            i === prev.length - 1 ? { ...m, pending: false } : m,
+          ),
+        );
+      } else {
+        // Append token to the last pending message
+        setLlmMessages((prev) => {
+          if (prev.length === 0) return prev;
+          return prev.map((m, i) =>
+            i === prev.length - 1
+              ? { ...m, answer: m.answer + latest.text }
+              : m,
+          );
+        });
+      }
+    }
+
     if (latest.type === "error") {
       setError(latest.message);
+      // If there's a pending LLM message, mark it as failed
+      setLlmMessages((prev) =>
+        prev.map((m, i) =>
+          i === prev.length - 1 && m.pending
+            ? { ...m, answer: `Error: ${latest.message}`, pending: false }
+            : m,
+        ),
+      );
     }
 
     if (
@@ -81,7 +109,6 @@ export default function TranscriptContainer() {
 
     const source = new FileAudioSource(file);
 
-    // Wrap start to track chunks sent
     const originalStart = source.start.bind(source);
     source.start = (onChunk, onDone) => {
       originalStart(
@@ -93,7 +120,6 @@ export default function TranscriptContainer() {
       );
     };
 
-    // If already connected, start immediately; otherwise connect and wait
     if (statusRef.current === "connected") {
       startStreaming(source);
     } else {
@@ -130,7 +156,6 @@ export default function TranscriptContainer() {
     }
   };
 
-  // --- Mic mode handlers ---
   const micSourceRef = useRef<MicAudioSource | null>(null);
 
   const handleMicStart = () => {
@@ -144,7 +169,6 @@ export default function TranscriptContainer() {
     const source = new MicAudioSource();
     micSourceRef.current = source;
 
-    // Wrap start to track chunks sent
     const originalStart = source.start.bind(source);
     source.start = (onChunk, onDone) => {
       originalStart(
@@ -170,12 +194,23 @@ export default function TranscriptContainer() {
     stopStreaming();
     setLoading(false);
 
-    // Signal stream complete to server
     send({
       type: "status",
       message: "stream_complete",
       ready: true,
     });
+  };
+
+  const handlePrompt = (question: string, contextWindow: number) => {
+    // Ensure WS is connected before sending prompt
+    if (statusRef.current !== "connected") {
+      connect();
+    }
+    setLlmMessages((prev) => [
+      ...prev,
+      { question, answer: "", pending: true },
+    ]);
+    send({ type: "prompt", question, context_window: contextWindow });
   };
 
   const handleUpload = mode === "stream" ? handleStreamUpload : handleDirectUpload;
@@ -190,49 +225,57 @@ export default function TranscriptContainer() {
   }, [loading, mode, chunksSent, chunksTranscribed, status]);
 
   return (
-    <section className="transcript-panel">
-      <div className="transcript-header">
-        <h2>Transcript</h2>
-        <div className="mode-toggle">
-          <button
-            className={`mode-btn ${mode === "upload" ? "active" : ""}`}
-            onClick={() => setMode("upload")}
-            disabled={loading}
-          >
-            Upload
-          </button>
-          <button
-            className={`mode-btn ${mode === "stream" ? "active" : ""}`}
-            onClick={() => setMode("stream")}
-            disabled={loading}
-          >
-            Stream
-          </button>
-          <button
-            className={`mode-btn ${mode === "mic" ? "active" : ""}`}
-            onClick={() => setMode("mic")}
-            disabled={loading}
-          >
-            Mic
-          </button>
+    <>
+      <section className="transcript-panel">
+        <div className="transcript-header">
+          <h2>Transcript</h2>
+          <div className="mode-toggle">
+            <button
+              className={`mode-btn ${mode === "upload" ? "active" : ""}`}
+              onClick={() => setMode("upload")}
+              disabled={loading}
+            >
+              Upload
+            </button>
+            <button
+              className={`mode-btn ${mode === "stream" ? "active" : ""}`}
+              onClick={() => setMode("stream")}
+              disabled={loading}
+            >
+              Stream
+            </button>
+            <button
+              className={`mode-btn ${mode === "mic" ? "active" : ""}`}
+              onClick={() => setMode("mic")}
+              disabled={loading}
+            >
+              Mic
+            </button>
+          </div>
         </div>
-      </div>
 
-      {mode === "mic" ? (
-        <MicCapture
-          recording={streaming}
-          onStart={handleMicStart}
-          onStop={handleMicStop}
-          disabled={loading && !streaming}
-        />
-      ) : (
-        <AudioUpload onUpload={handleUpload} disabled={loading} />
-      )}
+        {mode === "mic" ? (
+          <MicCapture
+            recording={streaming}
+            onStart={handleMicStart}
+            onStop={handleMicStop}
+            disabled={loading && !streaming}
+          />
+        ) : (
+          <AudioUpload onUpload={handleUpload} disabled={loading} />
+        )}
 
-      {statusLabel && <p className="status-msg">{statusLabel}</p>}
-      {error && <p className="error-msg">{error}</p>}
+        {statusLabel && <p className="status-msg">{statusLabel}</p>}
+        {error && <p className="error-msg">{error}</p>}
 
-      <TranscriptView segments={segments} />
-    </section>
+        <TranscriptView segments={segments} />
+      </section>
+
+      <BrainPanel
+        onPrompt={handlePrompt}
+        messages={llmMessages}
+        disabled={status !== "connected"}
+      />
+    </>
   );
 }

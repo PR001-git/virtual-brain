@@ -33,6 +33,11 @@ export class ClientHandler extends EventEmitter {
       this.forwardToPython(JSON.stringify(msg));
     });
 
+    // Route prompt messages to Python (Phase 4)
+    this.router.on("prompt", (msg) => {
+      this.forwardToPython(JSON.stringify(msg));
+    });
+
     // Handle incoming messages from the browser client
     this.clientWs.on("message", (data) => {
       const raw = data.toString();

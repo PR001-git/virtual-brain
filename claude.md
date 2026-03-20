@@ -4,6 +4,7 @@ Keep the plan practical and focused — this is a learning project, not producti
 ## Critical Rules
 
 - **Always update CLAUDE.md** — whenever project structure, architecture, phases, rules, or conventions change, update the relevant sections in this file immediately. CLAUDE.md must stay in sync with the actual state of the project.
+- **Always update CLAUDE.md structures and rules** — whenever a new pattern, constraint, architectural decision, or development rule is established during work, add it to the appropriate section in CLAUDE.md before ending the task. Never let agreed-upon rules or structural changes exist only in conversation history.
 
 ## Overview
 VirtualBrain is a local-first, open-source system that acts as a real-time cognitive layer on top of live conversations.
@@ -200,9 +201,15 @@ No blocking steps.
 - Capture browser audio
 - Stream in real time
 
-### Phase 4 — Thinking Brain
-- Add memory layer
-- Enable prompt-based Q&A
+### Phase 4 — Thinking Brain ✓ COMPLETE
+- `InMemoryRepository` (`repositories/memory_repository.py`): rolling buffer of transcript segments, FIFO pruning at `MEMORY_MAX_SEGMENTS` (default 200)
+- `OllamaAdapter` (`adapters/ollama_adapter.py`): streams responses from locally-running Ollama; grounded in transcript context via system prompt
+- `service_factory.py`: `create_memory_repo()` and `create_llm_client()` factories wired on startup
+- `main.py`: every transcribed segment is stored in memory; `prompt` WS messages trigger context retrieval → LLM streaming → `llm_response` tokens sent back
+- `client-handler.ts` (Node): `prompt` message type forwarded to Python
+- `BrainPanel.tsx` (React): prompt input + streaming answer display, grounded-context hint, error handling
+- Requires: Ollama running locally (`ollama serve`) with the configured model (default: `mistral`)
+- Env vars: `VB_OLLAMA_URL`, `VB_OLLAMA_MODEL`, `VB_MEMORY_MAX_SEGMENTS`, `VB_MEMORY_PRUNE_COUNT`
 
 ### Phase 5 — Reactive Brain
 - Improve latency

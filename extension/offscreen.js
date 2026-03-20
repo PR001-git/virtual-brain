@@ -8,7 +8,7 @@
 
 const WS_URL = "ws://localhost:8200/ws";
 const SAMPLE_RATE = 16000;
-const CHUNK_DURATION_S = 1;
+const CHUNK_DURATION_S = 3;
 
 let ws = null;
 let mediaStream = null;
